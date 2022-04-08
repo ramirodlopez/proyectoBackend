@@ -1,5 +1,6 @@
 import express from "express";
 import fs from "fs";
+import ContenedorCarrito from "./database/carrito.js";
 
 const app = express();
 const PORT = 8080;
@@ -11,14 +12,14 @@ app.listen(PORT, () => {
 //P R O D U C T O S
 
 //GET
-app.get("/api/productos/:id?", async (req, res) => {
+app.get("/api/productos/:pid?", async (req, res) => {
   const content = await fs.promises.readFile(
     "./src/database/productos.txt",
     "utf-8"
   );
   let parseado = JSON.parse(content);
-  if (req.params.id) {
-    parseado = parseado.find((p) => p.id == req.params.id);
+  if (req.params.pid) {
+    parseado = parseado.find((p) => p.id == req.params.pid);
   }
   res.send({ items: parseado, cantidad: parseado.length });
 });
@@ -42,14 +43,14 @@ app.post("/api/productos", async (req, res) => {
 });
 
 //DELETE
-app.delete("/api/productos/:id", async (req, res) => {
+app.delete("/api/productos/:pid", async (req, res) => {
   const content = await fs.promises.readFile(
     "./src/database/productos.txt",
     "utf-8"
   );
   let parseado = JSON.parse(content);
-  if (req.params.id) {
-    parseado = parseado.filter((p) => p.id != req.params.id);
+  if (req.params.pid) {
+    parseado = parseado.filter((p) => p.id != req.params.pid);
   }
   //meter dentro del archivo productos.txt
   await fs.promises.writeFile(
@@ -60,14 +61,14 @@ app.delete("/api/productos/:id", async (req, res) => {
 });
 
 //PUT
-app.put("/api/productos/:id", async (req, res) => {
+app.put("/api/productos/:pid", async (req, res) => {
   const content = await fs.promises.readFile(
     "./src/database/productos.txt",
     "utf-8"
   );
   let parseado = JSON.parse(content);
-  if (req.params.id) {
-    let modificado = parseado.find((p) => p.id == req.params.id);
+  if (req.params.pid) {
+    let modificado = parseado.find((p) => p.id == req.params.pid);
     let pos = parseado.indexOf(modificado);
     let actProduct = req.body;
     parseado[pos].title = actProduct.title;
@@ -87,18 +88,11 @@ app.put("/api/productos/:id", async (req, res) => {
 
 //POST
 app.post("/api/carrito", async (req, res) => {
-  const content = await fs.promises.readFile(
-    "./src/database/carrito.txt",
-    "utf-8"
-  );
-  let parseado = JSON.parse(content);
-  let newProduct = req.body;
-  newProduct.id = parseado.length + 1;
-  parseado = [...parseado, newProduct]; // IGUAL PUSH
-  //meter dentro del archivo productos.txt
-  await fs.promises.writeFile(
-    "./src/database/productos.txt",
-    JSON.stringify(parseado)
-  );
-  res.send(newProduct);
+  let carrito = new Object();
+  let test = new ContenedorCarrito();
+  carrito.title = req.body.title;
+  let id = test.crear(carrito);
+
+  console.log(`carritoAgregadoConId: ${id}`);
+  res.json({ carritoAgregadoConId: `${id}` });
 });
