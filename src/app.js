@@ -21,6 +21,7 @@ app.get("/api/productos/:pid?", async (req, res) => {
   if (req.params.pid) {
     parseado = parseado.find((p) => p.id == req.params.pid);
   }
+
   res.send({ items: parseado, cantidad: parseado.length });
 });
 
@@ -95,4 +96,79 @@ app.post("/api/carrito", async (req, res) => {
 
   console.log(`carritoAgregadoConId: ${id}`);
   res.json({ carritoAgregadoConId: `${id}` });
+});
+
+//DELETE
+app.delete("/api/carrito/:cid", async (req, res) => {
+  const content = await fs.promises.readFile(
+    "./src/database/carrito.txt",
+    "utf-8"
+  );
+  let parseado = JSON.parse(content);
+  if (req.params.cid) {
+    parseado = parseado.filter((p) => p.id != req.params.cid);
+  }
+  //meter dentro del archivo productos.txt
+  await fs.promises.writeFile(
+    "./src/database/carrito.txt",
+    JSON.stringify(parseado)
+  );
+  res.send("Se borro");
+});
+
+//GET
+app.get("/api/carrito/:cid/productos", async (req, res) => {
+  const content = await fs.promises.readFile(
+    "./src/database/carrito.txt",
+    "utf-8"
+  );
+  let parseado = JSON.parse(content);
+  if (req.params.pid) {
+    parseado = parseado.find((p) => p.id == req.params.pid);
+  }
+  res.send({ productos: parseado, cantidad: parseado.length });
+});
+
+//POST
+app.post("/api/carrito/:cid/:pid", async (req, res) => {
+  //CARRITO
+  const content = await fs.promises.readFile(
+    "./src/database/carrito.txt",
+    "utf-8"
+  );
+  let parseadoc = JSON.parse(content);
+  if (req.params.cid) {
+    parseadoc = parseadoc.find((p) => p.id == req.params.cid);
+  }
+
+  //PRODUCTO
+  const contente = await fs.promises.readFile(
+    "./src/database/productos.txt",
+    "utf-8"
+  );
+  let parseadop = JSON.parse(contente);
+  if (req.params.pid) {
+    parseadop = parseadop.find((p) => p.id == req.params.pid);
+  }
+
+  //let largoProd = parseadoc.producto.length;
+
+  //parseadoc.producto[largoProd] = parseadop;
+
+  let parseadoGlobalCarrito = JSON.parse(content);
+  for (let i = 0; i < parseadoGlobalCarrito.length; i++) {
+    if (parseadoGlobalCarrito[i].id == parseadoc.id) {
+      parseadoGlobalCarrito[i].producto.push(parseadop);
+    }
+  }
+
+  //meter dentro del producto dentro de carrito.txt
+  await fs.promises.writeFile(
+    "./src/database/carrito.txt",
+    JSON.stringify(parseadoGlobalCarrito)
+  );
+
+  console.log(parseadoc);
+  console.log(parseadop);
+  res.send("Se agrego el producto al carrito");
 });
