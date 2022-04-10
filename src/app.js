@@ -1,6 +1,6 @@
 import express from "express";
 import fs from "fs";
-import ContenedorCarrito from "./database/carrito.js";
+import { crear } from "./database/carrito.js";
 
 const app = express();
 const PORT = 8080;
@@ -89,10 +89,8 @@ app.put("/api/productos/:pid", async (req, res) => {
 
 //POST
 app.post("/api/carrito", async (req, res) => {
-  let carrito = new Object();
-  let test = new ContenedorCarrito();
-  carrito.title = req.body.title;
-  let id = test.crear(carrito);
+  let carrito = { title: req.body.title };
+  let id = crear(carrito);
 
   console.log(`carritoAgregadoConId: ${id}`);
   res.json({ carritoAgregadoConId: `${id}` });
@@ -130,7 +128,50 @@ app.get("/api/carrito/:cid/productos", async (req, res) => {
 });
 
 //POST
-app.post("/api/carrito/:cid/:pid", async (req, res) => {
+app.post("/api/carrito/:cid/productos", async (req, res) => {
+  //CARRITO
+  const content = await fs.promises.readFile(
+    "./src/database/carrito.txt",
+    "utf-8"
+  );
+  let parseadoc = JSON.parse(content);
+  let carritoMod;
+  if (req.params.cid) {
+    carritoMod = parseadoc.find((p) => p.id == req.params.cid);
+  }
+
+  //PRODUCTO
+  const contente = await fs.promises.readFile(
+    "./src/database/productos.txt",
+    "utf-8"
+  );
+  let parseadop = JSON.parse(contente);
+  let idsProduct = req.body.id;
+  console.log(idsProduct);
+  let newProduct;
+  let newProducts = [];
+
+  for (let i = 0; i < idsProduct.length; i++) {
+    newProduct = parseadop.find((p) => p.id == idsProduct[i]);
+    if (newProduct != undefined) {
+      newProducts.push(newProduct);
+    }
+  }
+
+  if (carritoMod != undefined) {
+    carritoMod.producto.push(...newProducts);
+  }
+
+  //meter dentro del producto dentro de carrito.txt
+  await fs.promises.writeFile(
+    "./src/database/carrito.txt",
+    JSON.stringify(parseadoc)
+  );
+
+  res.send("Se agregaron los productos al carrito");
+});
+
+app.delete("/api/carrito/:cid/productos/:pid", async (req, res) => {
   //CARRITO
   const content = await fs.promises.readFile(
     "./src/database/carrito.txt",
@@ -151,24 +192,19 @@ app.post("/api/carrito/:cid/:pid", async (req, res) => {
     parseadop = parseadop.find((p) => p.id == req.params.pid);
   }
 
-  //let largoProd = parseadoc.producto.length;
-
-  //parseadoc.producto[largoProd] = parseadop;
-
   let parseadoGlobalCarrito = JSON.parse(content);
   for (let i = 0; i < parseadoGlobalCarrito.length; i++) {
     if (parseadoGlobalCarrito[i].id == parseadoc.id) {
-      parseadoGlobalCarrito[i].producto.push(parseadop);
+      parseadoGlobalCarrito[i].producto = parseadoGlobalCarrito[
+        i
+      ].producto.filter((p) => p.id != parseadop.id);
     }
   }
-
   //meter dentro del producto dentro de carrito.txt
   await fs.promises.writeFile(
     "./src/database/carrito.txt",
     JSON.stringify(parseadoGlobalCarrito)
   );
 
-  console.log(parseadoc);
-  console.log(parseadop);
-  res.send("Se agrego el producto al carrito");
+  res.send("Se saco el producto al carrito");
 });
