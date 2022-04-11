@@ -6,9 +6,9 @@ export function crear(carrito) {
   let idMayor = 0;
   let time = Date();
 
-  if (fs.readFileSync("./src/database/carrito.txt", "utf-8") !== "") {
+  if (fs.readFileSync("./src/database/carts.txt", "utf-8") !== "") {
     arregloOld = JSON.parse(
-      fs.readFileSync("./src/database/carrito.txt", "utf-8")
+      fs.readFileSync("./src/database/carts.txt", "utf-8")
     );
   }
 
@@ -23,7 +23,7 @@ export function crear(carrito) {
   arregloOld.push(carrito);
 
   let carritoJSON = JSON.stringify(arregloOld);
-  fs.writeFile("./src/database/carrito.txt", carritoJSON, (error) => {
+  fs.writeFile("./src/database/carts.txt", carritoJSON, (error) => {
     if (error) {
       console.log(error);
     } else {
