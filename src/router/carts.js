@@ -1,6 +1,10 @@
 import express from "express";
 import fs from "fs";
 import { crear } from "../database/funciones.js";
+import {
+  leerArchivoCarrito,
+  leerArchivoProductos,
+} from "../database/funciones.js";
 
 const router = express.Router();
 
@@ -12,10 +16,7 @@ router.post("", async (req, res) => {
   res.json({ carritoAgregadoConId: `${id}` });
 });
 router.delete("/:cid", async (req, res) => {
-  const content = await fs.promises.readFile(
-    "./src/database/carts.txt",
-    "utf-8"
-  );
+  const content = await leerArchivoCarrito();
   let parseado = JSON.parse(content);
   if (req.params.cid) {
     parseado = parseado.filter((p) => p.id != req.params.cid);
@@ -29,10 +30,7 @@ router.delete("/:cid", async (req, res) => {
 });
 
 router.get("/:cid/products", async (req, res) => {
-  const content = await fs.promises.readFile(
-    "./src/database/carts.txt",
-    "utf-8"
-  );
+  const content = await leerArchivoCarrito();
   let parseado = JSON.parse(content);
   if (req.params.cid) {
     parseado = parseado.find((p) => p.id == req.params.cid);
@@ -42,10 +40,7 @@ router.get("/:cid/products", async (req, res) => {
 
 router.post("/:cid/products", async (req, res) => {
   //CARRITO
-  const content = await fs.promises.readFile(
-    "./src/database/carts.txt",
-    "utf-8"
-  );
+  const content = await leerArchivoCarrito();
   let parseadoc = JSON.parse(content);
   let carritoMod;
   if (req.params.cid) {
@@ -53,10 +48,7 @@ router.post("/:cid/products", async (req, res) => {
   }
 
   //PRODUCTO
-  const contente = await fs.promises.readFile(
-    "./src/database/products.txt",
-    "utf-8"
-  );
+  const contente = await leerArchivoProductos();
   let parseadop = JSON.parse(contente);
   let idsProduct = req.body.id;
   console.log(idsProduct);
@@ -102,10 +94,7 @@ router.post("/:cid/products", async (req, res) => {
 router.delete("/:cid/products/:pid", async (req, res) => {
   //CARRITO
   let carritoAModificar;
-  const content = await fs.promises.readFile(
-    "./src/database/carts.txt",
-    "utf-8"
-  );
+  const content = await leerArchivoCarrito();
   const listaDeCarritos = JSON.parse(content);
   if (req.params.cid) {
     carritoAModificar = listaDeCarritos.find((p) => p.id == req.params.cid);
@@ -114,10 +103,7 @@ router.delete("/:cid/products/:pid", async (req, res) => {
   //PRODUCTO
   let productoConStock;
   const reqProducto = req.params.pid;
-  const contente = await fs.promises.readFile(
-    "./src/database/products.txt",
-    "utf-8"
-  );
+  const contente = await leerArchivoProductos();
   const listDeProductos = JSON.parse(contente);
   if (reqProducto) {
     productoConStock = listDeProductos.find((p) => p.id == reqProducto);
