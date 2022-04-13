@@ -32,3 +32,11 @@ export function crear(carrito) {
   });
   return carrito.id;
 }
+
+export async function leerArchivoProductos() {
+  return await fs.promises.readFile("./src/database/products.txt", "utf-8");
+}
+
+export async function leerArchivoCarrito() {
+  return await fs.promises.readFile("./src/database/carts.txt", "utf-8");
+}
