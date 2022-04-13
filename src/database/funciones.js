@@ -32,11 +32,3 @@ export function crear(carrito) {
   });
   return carrito.id;
 }
-
-export function isAdmin(valor) {
-  if (valor == 1) {
-    return true;
-  } else {
-    return false;
-  }
-}

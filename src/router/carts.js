@@ -65,13 +65,25 @@ router.post("/:cid/products", async (req, res) => {
 
   for (let i = 0; i < idsProduct.length; i++) {
     newProduct = parseadop.find((p) => p.id == idsProduct[i]);
-    if (newProduct != undefined) {
-      newProducts.push(newProduct);
+    if (newProduct != undefined && newProduct.stock > 0) {
+      newProduct.stock--;
+      const { stock, ...attrNewProduct } = newProduct;
+
+      newProducts.push({ ...attrNewProduct, quantity: 1 });
     }
   }
 
   if (carritoMod != undefined) {
-    carritoMod.producto.push(...newProducts);
+    for (let j = 0; j < newProducts.length; j++) {
+      const existenP = carritoMod.producto.find(
+        (p) => p.id == newProducts[j].id
+      );
+      if (existenP != undefined) {
+        existenP.quantity++;
+      } else {
+        carritoMod.producto.push(newProducts[j]);
+      }
+    }
   }
 
   //meter dentro del producto dentro de carrito.txt
@@ -79,43 +91,65 @@ router.post("/:cid/products", async (req, res) => {
     "./src/database/carts.txt",
     JSON.stringify(parseadoc)
   );
+  await fs.promises.writeFile(
+    "./src/database/products.txt",
+    JSON.stringify(parseadop)
+  );
 
   res.send("Se agregaron los productos al carrito");
 });
 
 router.delete("/:cid/products/:pid", async (req, res) => {
   //CARRITO
+  let carritoAModificar;
   const content = await fs.promises.readFile(
     "./src/database/carts.txt",
     "utf-8"
   );
-  let parseadoc = JSON.parse(content);
+  const listaDeCarritos = JSON.parse(content);
   if (req.params.cid) {
-    parseadoc = parseadoc.find((p) => p.id == req.params.cid);
+    carritoAModificar = listaDeCarritos.find((p) => p.id == req.params.cid);
   }
 
   //PRODUCTO
+  let productoConStock;
+  const reqProducto = req.params.pid;
   const contente = await fs.promises.readFile(
     "./src/database/products.txt",
     "utf-8"
   );
-  let parseadop = JSON.parse(contente);
-  if (req.params.pid) {
-    parseadop = parseadop.find((p) => p.id == req.params.pid);
+  const listDeProductos = JSON.parse(contente);
+  if (reqProducto) {
+    productoConStock = listDeProductos.find((p) => p.id == reqProducto);
   }
 
-  let parseadoGlobalCarrito = JSON.parse(content);
-  for (let i = 0; i < parseadoGlobalCarrito.length; i++) {
-    if (parseadoGlobalCarrito[i].id == parseadoc.id) {
-      parseadoGlobalCarrito[i].producto = parseadoGlobalCarrito[
-        i
-      ].producto.filter((p) => p.id != parseadop.id);
+  const productoAModificar = carritoAModificar.producto.find(
+    (p) => p.id == reqProducto
+  );
+
+  if (productoAModificar != undefined) {
+    if (productoAModificar.quantity > 1) {
+      productoAModificar.quantity--;
+    } else {
+      const productosDeCarritoActualizado = carritoAModificar.producto.filter(
+        (p) => p.id != reqProducto
+      );
+      carritoAModificar.producto = productosDeCarritoActualizado;
     }
-  }
+
+    // suponiendo que esto existe en el archivo products.txt
+    productoConStock.stock++;
+  } // sino podríamos explotar o salir porque no exite el producto
+
   //meter dentro del producto dentro de carrito.txt
   await fs.promises.writeFile(
     "./src/database/carts.txt",
-    JSON.stringify(parseadoGlobalCarrito)
+    JSON.stringify(listaDeCarritos)
+  );
+
+  await fs.promises.writeFile(
+    "./src/database/products.txt",
+    JSON.stringify(listDeProductos)
   );
 
   res.send("Se saco el producto al carrito");
