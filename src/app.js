@@ -8,7 +8,7 @@ const PORT = 8080;
 app.use(express.json());
 
 app.use(function (req, res, next) {
-  if (req.method != "GET" && req.path.indexOf("/api/carts")) {
+  if (req.method != "GET" && req.path.includes("/api/products")) {
     if (req.headers.admin == "true") {
       //NO ME TOMA EL BOLEAN GOOGLEAR Y ME LO TOMA COMO STRING
       console.log(req.headers.admin);
