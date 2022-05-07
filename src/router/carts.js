@@ -1,6 +1,7 @@
 import express from "express";
 import fs from "fs";
 import { crear } from "../database/funciones.js";
+import CartDAO from "../database/daos/cartDAO.js";
 import {
   leerArchivoCarrito,
   leerArchivoProductos,
@@ -9,24 +10,16 @@ import {
 const router = express.Router();
 
 router.post("", async (req, res) => {
-  let carrito = { title: req.body.title };
-  let id = crear(carrito);
-
-  console.log(`carritoAgregadoConId: ${id}`);
-  res.json({ carritoAgregadoConId: `${id}` });
+  const cart = new CartDAO();
+  const cartId = await cart.getAll();
+  await cart.save(req.body, cartId.length);
+  res.send(req.body);
 });
+
 router.delete("/:cid", async (req, res) => {
-  const content = await leerArchivoCarrito();
-  let parseado = JSON.parse(content);
-  if (req.params.cid) {
-    parseado = parseado.filter((p) => p.id != req.params.cid);
-  }
-  //meter dentro del archivo productos.txt
-  await fs.promises.writeFile(
-    "./src/database/carts.txt",
-    JSON.stringify(parseado)
-  );
-  res.send("Se borro");
+  const cart = new CartDAO();
+  const borrar = await cart.deleteById(req.params.cid);
+  res.send(`Se borro ${borrar}`);
 });
 
 router.get("/:cid/products", async (req, res) => {

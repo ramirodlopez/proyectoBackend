@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
-import productSchema from "./schema/productSchema.js";
+import cartSchema from "./schema/cartSchema.js";
+import Products from "./productDAO.js";
+
+const Product = new Products();
 
 export default class ProductDAO {
   async connectMDB() {
@@ -15,12 +18,14 @@ export default class ProductDAO {
     }
   }
 
-  async save(producto) {
+  async save(carrito, id) {
     try {
-      //let tiempo = new Date();
+      let tiempo = new Date();
       await this.connectMDB();
-      //producto.time = tiempo.toString();
-      await productSchema.create(producto);
+      carrito.timestamp = tiempo.toString();
+      carrito.id = id;
+      await cartSchema.create(carrito);
+
       mongoose.disconnect();
       return;
     } catch (error) {
@@ -32,9 +37,9 @@ export default class ProductDAO {
     const filter = id ? { id } : {};
     try {
       await this.connectMDB();
-      const prod = await productSchema.find(filter);
+      const cart = await cartSchema.find(filter);
       mongoose.disconnect();
-      return prod;
+      return cart;
     } catch (error) {
       throw Error(error.message);
     }
@@ -54,7 +59,7 @@ export default class ProductDAO {
   async deleteById(id) {
     try {
       await this.connectMDB();
-      const borrado = await productSchema.deleteOne({ id });
+      const borrado = await cartSchema.deleteOne({ id });
       mongoose.disconnect();
       return borrado;
     } catch (error) {
