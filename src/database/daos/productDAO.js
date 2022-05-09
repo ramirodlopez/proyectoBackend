@@ -40,6 +40,17 @@ export default class ProductDAO {
     }
   }
 
+  async getById(id) {
+    try {
+      await this.connectMDB();
+      const prodId = await productSchema.findById(id);
+      mongoose.disconnect();
+      return prodId;
+    } catch (error) {
+      throw Error(error.message);
+    }
+  }
+
   async changeById(id, cambio) {
     try {
       await this.connectMDB();

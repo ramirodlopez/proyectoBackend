@@ -4,7 +4,7 @@ import Products from "./productDAO.js";
 
 const Product = new Products();
 
-export default class ProductDAO {
+export default class CartDAO {
   async connectMDB() {
     try {
       const URL =
@@ -33,6 +33,93 @@ export default class ProductDAO {
     }
   }
 
+  async saveProduct(productos, idCarrito) {
+    try {
+      //let tiempo = new Date();
+      await this.connectMDB();
+      console.log(idCarrito);
+      //producto.time = tiempo.toString();
+      if (productos.quantity > 0) {
+        productos.quantity += 1;
+      } else {
+        productos.quantity = 1;
+      }
+      const nuevo = await cartSchema.updateOne(
+        { id: idCarrito },
+        {
+          $push: {
+            producto: productos,
+          },
+        }
+      );
+      mongoose.disconnect();
+      return nuevo;
+    } catch (error) {
+      throw Error(error.message);
+    }
+  }
+
+  async deleteProduct(product, idCarrito) {
+    try {
+      //let tiempo = new Date();
+      await this.connectMDB();
+      console.log(idCarrito);
+      //producto.time = tiempo.toString();
+      const nuevo = await cartSchema.deleteOne(
+        {
+          id: idCarrito,
+        },
+        {
+          $pull: {
+            producto: product.id,
+          },
+        }
+      );
+      mongoose.disconnect();
+      return nuevo;
+    } catch (error) {
+      throw Error(error.message);
+    }
+  }
+
+  async updateProduct(id, cambio) {
+    try {
+      await this.connectMDB();
+      cambio.quantity++;
+      //OSEA EL ERROR ES Q LOGRO ENTRAR EN EL CARRITO Q ES PERO NO EN LOS PRODUCOT[]
+      const nuevo = await cartSchema.updateOne(
+        { id: id },
+        {
+          $set: {
+            producto: cambio,
+          },
+        }
+      );
+      mongoose.disconnect();
+      return nuevo;
+    } catch (error) {
+      throw Error(error.message);
+    }
+  }
+
+  async deleteUpdateProduct(id, cambio) {
+    try {
+      await this.connectMDB();
+      const nuevo = await cartSchema.updateOne(
+        { id: id },
+        {
+          $set: {
+            producto: cambio,
+          },
+        }
+      );
+      mongoose.disconnect();
+      return nuevo;
+    } catch (error) {
+      throw Error(error.message);
+    }
+  }
+
   async getAll(id) {
     const filter = id ? { id } : {};
     try {
@@ -40,6 +127,17 @@ export default class ProductDAO {
       const cart = await cartSchema.find(filter);
       mongoose.disconnect();
       return cart;
+    } catch (error) {
+      throw Error(error.message);
+    }
+  }
+
+  async getById(id) {
+    try {
+      await this.connectMDB();
+      const cartId = await cartSchema.findById(id);
+      mongoose.disconnect();
+      return cartId;
     } catch (error) {
       throw Error(error.message);
     }

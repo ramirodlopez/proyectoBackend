@@ -24,22 +24,6 @@ router.delete("/:pid", async (req, res) => {
 });
 
 router.put("/:pid", async (req, res) => {
-  //const content = await leerArchivoProductos();
-  //let parseado = JSON.parse(content);
-  //if (req.params.pid) {
-  // let modificado = parseado.find((p) => p.id == req.params.pid);
-  //let pos = parseado.indexOf(modificado);
-  //let actProduct = req.body;
-  // parseado[pos].title = actProduct.title;
-  //parseado[pos].price = actProduct.price; //VER COMO DECTECTAR SOLO LO Q SE PASA POR BODY
-  //parseado[pos].thumbnail = actProduct.thumbnail;
-  //parseado[pos].stock = actProduct.stock;
-  // }
-  //meter dentro del archivo productos.txt
-  // await fs.promises.writeFile(
-  // "./src/database/products.txt",
-  // JSON.stringify(parseado)
-  //);
   const prod = new ProductDAO();
   const cambio = req.body;
   const cambiado = await prod.changeById(req.params.pid, cambio);

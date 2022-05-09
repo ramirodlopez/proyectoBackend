@@ -2,6 +2,7 @@ import express from "express";
 import fs from "fs";
 import { crear } from "../database/funciones.js";
 import CartDAO from "../database/daos/cartDAO.js";
+import ProductDAO from "../database/daos/productDAO.js";
 import {
   leerArchivoCarrito,
   leerArchivoProductos,
@@ -23,115 +24,66 @@ router.delete("/:cid", async (req, res) => {
 });
 
 router.get("/:cid/products", async (req, res) => {
-  const content = await leerArchivoCarrito();
-  let parseado = JSON.parse(content);
-  if (req.params.cid) {
-    parseado = parseado.find((p) => p.id == req.params.cid);
-  }
-  res.send({ productos: parseado.producto });
+  let idid = 123;
+  const cart = new CartDAO();
+  const carrito = await cart.getAll(req.params.cid);
+  //testeos rami
+  let carritoNew = carrito[0].producto.find((p) => p.id == idid);
+  console.log(carritoNew);
+  res.send({ cart: carrito });
 });
 
 router.post("/:cid/products", async (req, res) => {
-  //CARRITO
-  const content = await leerArchivoCarrito();
-  let parseadoc = JSON.parse(content);
-  let carritoMod;
-  if (req.params.cid) {
-    carritoMod = parseadoc.find((p) => p.id == req.params.cid);
-  }
-
-  //PRODUCTO
-  const contente = await leerArchivoProductos();
-  let parseadop = JSON.parse(contente);
   let idsProduct = req.body.id;
-  console.log(idsProduct);
-  let newProduct;
-  let newProducts = [];
-
-  for (let i = 0; i < idsProduct.length; i++) {
-    newProduct = parseadop.find((p) => p.id == idsProduct[i]);
-    if (newProduct != undefined && newProduct.stock > 0) {
-      newProduct.stock--;
-      const { stock, ...attrNewProduct } = newProduct;
-
-      newProducts.push({ ...attrNewProduct, quantity: 1 });
-    }
+  const prod = new ProductDAO();
+  const items = await prod.getAll(idsProduct);
+  const itemElegido = await prod.getById(items[0]._id);
+  if (itemElegido.stock > 0) {
+    itemElegido.stock--;
+  } else {
+    res.send(`No hay stock de ${itemElegido.id}`);
+  }
+  await prod.changeById(itemElegido.id, itemElegido);
+  console.log(itemElegido.stock);
+  const cart = new CartDAO();
+  let carrito = await cart.getAll(req.params.cid);
+  let carritoNew = carrito[0].producto.find((p) => p.id == req.body.id);
+  if (carritoNew != undefined) {
+    carritoNew.quantity = carritoNew.quantity + 1;
+    let carritoMod = carrito[0].producto.filter((p) => p.id != req.body.id);
+    carritoMod.push(carritoNew);
+    carritoNew = carritoMod;
+    console.log(carritoNew);
+    await cart.updateProduct(req.params.cid, carritoNew);
+  } else {
+    await cart.saveProduct(itemElegido, req.params.cid);
   }
 
-  if (carritoMod != undefined) {
-    for (let j = 0; j < newProducts.length; j++) {
-      const existenP = carritoMod.producto.find(
-        (p) => p.id == newProducts[j].id
-      );
-      if (existenP != undefined) {
-        existenP.quantity++;
-      } else {
-        carritoMod.producto.push(newProducts[j]);
-      }
-    }
-  }
-
-  //meter dentro del producto dentro de carrito.txt
-  await fs.promises.writeFile(
-    "./src/database/carts.txt",
-    JSON.stringify(parseadoc)
-  );
-  await fs.promises.writeFile(
-    "./src/database/products.txt",
-    JSON.stringify(parseadop)
-  );
-
-  res.send("Se agregaron los productos al carrito");
+  res.send("se agrego");
 });
 
 router.delete("/:cid/products/:pid", async (req, res) => {
-  //CARRITO
-  let carritoAModificar;
-  const content = await leerArchivoCarrito();
-  const listaDeCarritos = JSON.parse(content);
-  if (req.params.cid) {
-    carritoAModificar = listaDeCarritos.find((p) => p.id == req.params.cid);
-  }
-
-  //PRODUCTO
-  let productoConStock;
-  const reqProducto = req.params.pid;
-  const contente = await leerArchivoProductos();
-  const listDeProductos = JSON.parse(contente);
-  if (reqProducto) {
-    productoConStock = listDeProductos.find((p) => p.id == reqProducto);
-  }
-
-  const productoAModificar = carritoAModificar.producto.find(
-    (p) => p.id == reqProducto
-  );
-
-  if (productoAModificar != undefined) {
-    if (productoAModificar.quantity > 1) {
-      productoAModificar.quantity--;
-    } else {
-      const productosDeCarritoActualizado = carritoAModificar.producto.filter(
-        (p) => p.id != reqProducto
+  let idProduct = req.params.pid;
+  const prod = new ProductDAO();
+  const items = await prod.getAll(idProduct);
+  const cart = new CartDAO();
+  let carrito = await cart.getAll(req.params.cid);
+  let carritoNew = carrito[0].producto.find((p) => p.id == req.params.pid);
+  if (carritoNew != undefined) {
+    if (carritoNew.quantity > 1) {
+      carritoNew.quantity = carritoNew.quantity - 1;
+      let carritoMod = carrito[0].producto.filter(
+        (p) => p.id != req.params.pid
       );
-      carritoAModificar.producto = productosDeCarritoActualizado;
+      carritoMod.push(carritoNew);
+      carritoNew = carritoMod;
+      console.log(carritoNew);
+    } else {
+      carritoNew = carrito[0].producto.filter((p) => p.id != req.params.pid);
     }
-
-    // suponiendo que esto existe en el archivo products.txt
-    productoConStock.stock++;
-  } // sino podríamos explotar o salir porque no exite el producto
-
-  //meter dentro del producto dentro de carrito.txt
-  await fs.promises.writeFile(
-    "./src/database/carts.txt",
-    JSON.stringify(listaDeCarritos)
-  );
-
-  await fs.promises.writeFile(
-    "./src/database/products.txt",
-    JSON.stringify(listDeProductos)
-  );
-
-  res.send("Se saco el producto al carrito");
+  }
+  await cart.deleteUpdateProduct(req.params.cid, carritoNew);
+  res.send("se borro");
 });
 
 export default router;
