@@ -18,12 +18,12 @@ export default class CartDAO {
     }
   }
 
-  async save(carrito, id) {
+  async save(carrito) {
     try {
       let tiempo = new Date();
       await this.connectMDB();
       carrito.timestamp = tiempo.toString();
-      carrito.id = id;
+      carrito.id = Date.now();
       await cartSchema.create(carrito);
 
       mongoose.disconnect();
@@ -85,7 +85,7 @@ export default class CartDAO {
   async updateProduct(id, cambio) {
     try {
       await this.connectMDB();
-      cambio.quantity++;
+
       //OSEA EL ERROR ES Q LOGRO ENTRAR EN EL CARRITO Q ES PERO NO EN LOS PRODUCOT[]
       const nuevo = await cartSchema.updateOne(
         { id: id },

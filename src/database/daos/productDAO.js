@@ -17,9 +17,7 @@ export default class ProductDAO {
 
   async save(producto) {
     try {
-      //let tiempo = new Date();
       await this.connectMDB();
-      //producto.time = tiempo.toString();
       await productSchema.create(producto);
       mongoose.disconnect();
       return;
