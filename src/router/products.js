@@ -1,6 +1,5 @@
 import express from "express";
 import fs from "fs";
-import { leerArchivoProductos } from "../database/funciones.js";
 import ProductDAO from "../database/daos/productDAO.js";
 
 const router = express.Router();
